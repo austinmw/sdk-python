@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from ..agent.state import AgentState
 from ..tools._tool_helpers import generate_missing_tool_result_content
-from ..types.content import ContentBlock, Message
+from ..types.content import ContentBlock, Message, _generate_tracking_id
 from ..types.exceptions import SessionException
 from ..types.session import (
     Session,
@@ -305,8 +305,10 @@ class RepositorySessionManager(SessionManager):
             )
 
             # Ensure a toolResult slot exists after this assistant message
+            # This synthesized message bypasses the append chokepoint, so give it a durable
+            # tracking id — matching messages appended through the normal path.
             if not existing_results and non_tool_result_content:
-                messages.insert(index + 1, {"role": "user", "content": []})
+                messages.insert(index + 1, {"role": "user", "content": [], "tracking_id": _generate_tracking_id()})
                 next_message = messages[index + 1]
                 non_tool_result_content = []
 
