@@ -14,10 +14,10 @@
   </h2>
 
   <div align="center">
-    <a href="https://github.com/strands-agents/mcp-server/graphs/commit-activity"><img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/strands-agents/mcp-server"/></a>
-    <a href="https://github.com/strands-agents/mcp-server/issues"><img alt="GitHub open issues" src="https://img.shields.io/github/issues/strands-agents/mcp-server"/></a>
-    <a href="https://github.com/strands-agents/mcp-server/pulls"><img alt="GitHub open pull requests" src="https://img.shields.io/github/issues-pr/strands-agents/mcp-server"/></a>
-    <a href="https://github.com/strands-agents/mcp-server/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/strands-agents/mcp-server"/></a>
+    <a href="https://github.com/strands-agents/harness-sdk/graphs/commit-activity"><img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/strands-agents/harness-sdk"/></a>
+    <a href="https://github.com/strands-agents/harness-sdk/issues"><img alt="GitHub open issues" src="https://img.shields.io/github/issues/strands-agents/harness-sdk"/></a>
+    <a href="https://github.com/strands-agents/harness-sdk/pulls"><img alt="GitHub open pull requests" src="https://img.shields.io/github/issues-pr/strands-agents/harness-sdk"/></a>
+    <a href="https://github.com/strands-agents/harness-sdk/blob/main/LICENSE.APACHE"><img alt="License" src="https://img.shields.io/github/license/strands-agents/harness-sdk"/></a>
     <a href="https://pypi.org/project/strands-agents-mcp-server/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/strands-agents-mcp-server"/></a>
     <a href="https://python.org"><img alt="Python versions" src="https://img.shields.io/pypi/pyversions/strands-agents-mcp-server"/></a>
     <a href="https://discord.gg/strands"><img alt="Strands Discord" src="https://img.shields.io/badge/Discord-Strands-5865F2?logo=discord&logoColor=white"/></a>
@@ -26,10 +26,10 @@
   <p>
     <a href="https://strandsagents.com/">Documentation</a>
     ◆ <a href="https://github.com/strands-agents/samples">Samples</a>
-    ◆ <a href="https://github.com/strands-agents/sdk-python">Python SDK</a>
+    ◆ <a href="https://github.com/strands-agents/harness-sdk/tree/main/strands-py">Python SDK</a>
     ◆ <a href="https://github.com/strands-agents/tools">Tools</a>
     ◆ <a href="https://github.com/strands-agents/agent-builder">Agent Builder</a>
-    ◆ <a href="https://github.com/strands-agents/mcp-server">MCP Server</a>
+    ◆ <a href="https://github.com/strands-agents/harness-sdk/tree/main/strands-mcp">MCP Server</a>
   </p>
 </div>
 
@@ -124,7 +124,7 @@ Provide Cline with the following information:
 
 ```
 I want to add the MCP server for Strands Agents.
-Here's the GitHub link: @https://github.com/strands-agents/mcp-server
+Here's the GitHub link: @https://github.com/strands-agents/harness-sdk/tree/main/strands-mcp
 Can you add it?"
 ```
 
@@ -215,8 +215,8 @@ The Inspector is also useful for troubleshooting MCP server issues as it provide
 ## Server Development
 
 ```bash
-git clone https://github.com/strands-agents/mcp-server.git
-cd mcp-server
+git clone https://github.com/strands-agents/harness-sdk.git
+cd harness-sdk/strands-mcp
 python3 -m venv venv
 source venv/bin/activate
 pip3 install -e ".[dev]"

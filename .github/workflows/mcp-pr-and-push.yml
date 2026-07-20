@@ -1,17 +1,12 @@
 name: "MCP: Pull Request and Push"
 
 on:
-  pull_request:
-    branches: [ main ]
-    types: [opened, synchronize, reopened, ready_for_review, review_requested, review_request_removed]
-    paths:
-      - 'strands-mcp/**'
-      - '.github/workflows/mcp-*'
   push:
     branches: [ main ]
     paths:
       - 'strands-mcp/**'
       - '.github/workflows/mcp-*'
+  workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true

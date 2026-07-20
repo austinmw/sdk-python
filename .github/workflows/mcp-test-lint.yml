@@ -1,4 +1,4 @@
-name: "MCP: Lint"
+name: "MCP: Test and Lint"
 
 on:
   workflow_call:
@@ -8,8 +8,8 @@ on:
         type: string
 
 jobs:
-  lint:
-    name: Lint
+  test-lint:
+    name: Test and Lint
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -18,13 +18,13 @@ jobs:
         working-directory: strands-mcp
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.10'
           cache: 'pip'
@@ -37,3 +37,7 @@ jobs:
         id: lint
         run: hatch run lint
         continue-on-error: false
+
+      - name: Run tests
+        id: test
+        run: hatch run test
