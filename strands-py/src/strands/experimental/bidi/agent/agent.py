@@ -14,6 +14,7 @@ Key capabilities:
 """
 
 import asyncio
+import copy
 import logging
 import uuid
 from collections.abc import AsyncGenerator
@@ -31,6 +32,15 @@ from ....tools.executors._executor import ToolExecutor
 from ....tools.registry import ToolRegistry
 from ....tools.tool_provider import ToolProvider
 from ....tools.watcher import ToolWatcher
+from ....types._snapshot import (
+    BIDI_SNAPSHOT_FIELDS,
+    BIDI_SNAPSHOT_PRESETS,
+    SNAPSHOT_SCHEMA_VERSION,
+    Snapshot,
+    SnapshotField,
+    SnapshotPreset,
+    resolve_snapshot_fields,
+)
 from ....types.agent import LocalAgent
 from ....types.content import (
     Message,
@@ -40,6 +50,7 @@ from ....types.content import (
     _ensure_tracking_id,
     split_system_prompt,
 )
+from ....types.exceptions import SnapshotException
 from ....types.media import ImageBlock
 from ....types.tools import AgentTool
 from .._async import _TaskGroup, stop_all
@@ -379,6 +390,86 @@ class BidiAgent(LocalAgent):
         """
         self._started = False
         await self._loop.stop()
+
+    def take_snapshot(
+        self,
+        *,
+        preset: SnapshotPreset | None = None,
+        include: list[SnapshotField] | None = None,
+        exclude: list[SnapshotField] | None = None,
+        app_data: dict[str, Any] | None = None,
+    ) -> Snapshot:
+        """Capture current agent state as an in-memory snapshot.
+
+        Captures committed conversation history and application state. Live connection
+        state, in-progress responses, and pending tool calls are not included.
+
+        Args:
+            preset: Named preset of fields to capture. Currently only "session" is supported,
+                which captures messages and state.
+            include: Additional fields to capture on top of the preset.
+            exclude: Fields to remove after applying preset and include.
+            app_data: Application-owned arbitrary JSON stored verbatim in the snapshot.
+
+        Returns:
+            A Snapshot containing the captured agent state.
+
+        Raises:
+            SnapshotException: If no fields are resolved or a field is invalid or unsupported.
+        """
+        for snapshot_field in [*(include or []), *(exclude or [])]:
+            if snapshot_field not in BIDI_SNAPSHOT_FIELDS:
+                raise SnapshotException(
+                    f"Invalid snapshot field: {snapshot_field!r}. Valid fields: {sorted(BIDI_SNAPSHOT_FIELDS)}"
+                )
+        preset_fields = BIDI_SNAPSHOT_PRESETS[preset] if preset is not None else ()
+        fields = resolve_snapshot_fields(include=[*preset_fields, *(include or [])], exclude=exclude)
+
+        data: dict[str, Any] = {}
+        if "messages" in fields:
+            data["messages"] = copy.deepcopy(self.messages)
+        if "state" in fields:
+            data["state"] = self.state.get()
+        if "system_prompt" in fields:
+            # Store the content-block representation so round-trips preserve caching hints and
+            # other block-level metadata.
+            data["system_prompt"] = copy.deepcopy(self._system_prompt_content)
+
+        return Snapshot(
+            scope="agent",
+            schema_version=SNAPSHOT_SCHEMA_VERSION,
+            data=data,
+            app_data=copy.deepcopy(app_data) if app_data else {},
+        )
+
+    def load_snapshot(self, snapshot: Snapshot) -> None:
+        """Restore agent state from a previously captured snapshot.
+
+        Only fields present in snapshot.data are restored; absent fields are left unchanged and
+        fields this agent does not support are ignored. The restored history is sent to the model
+        on the next start().
+
+        Args:
+            snapshot: The snapshot to restore from.
+
+        Raises:
+            SnapshotException: If snapshot.schema_version is not "1.0" or snapshot.scope is not "agent".
+            RuntimeError: If the agent is started.
+        """
+        if self._started:
+            raise RuntimeError("agent started | call stop before loading a snapshot")
+        snapshot.validate()
+        if snapshot.scope != "agent":
+            raise SnapshotException(f"Expected snapshot scope 'agent', got {snapshot.scope!r}")
+
+        data = snapshot.data
+
+        if "messages" in data:
+            self.messages = copy.deepcopy(data["messages"])
+        if "state" in data:
+            self.state = AgentState(data["state"])
+        if "system_prompt" in data:
+            self.system_prompt = copy.deepcopy(data["system_prompt"])
 
     async def __aenter__(self, invocation_state: dict[str, Any] | None = None) -> "BidiAgent":
         """Async context manager entry point.
