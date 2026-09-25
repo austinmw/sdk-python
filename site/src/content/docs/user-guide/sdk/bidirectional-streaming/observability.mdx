@@ -156,13 +156,13 @@ text-only response has no such attribute. Response finish reasons are:
 
 | Value | Meaning |
 |-------|---------|
-| `complete` | The model finished the response on its own |
+| `end_turn` | The model finished the response on its own |
 | `barge_in` | The user cut in, or a new response began before this one ended |
-| `error` | The model stream raised while the response was open |
+| `tool_use` | The model handed off to a tool |
+| `error` | The response or model stream ended with an error |
 | `incomplete` | The session stopped while the response was still open |
 
-`incomplete` is expected when a session ends mid-turn and is not itself an error. A
-custom provider may also report `tool_use`; none of the bundled providers do.
+`incomplete` is expected when a session ends mid-turn and is not itself an error.
 
 A restart span covers the reconnect operation. During this interval, sends wait for the
 connection gate to reopen. Check span status, rather than the presence of
@@ -258,7 +258,7 @@ same session produces the following child response span:
         "gen_ai.system": "strands-agents",
         "gen_ai.response.id": "resp_01",
         "gen_ai.event.end_time": "2026-08-10T13:27:26.830133+00:00",
-        "gen_ai.response.finish_reason": "complete",
+        "gen_ai.response.finish_reason": "end_turn",
         "gen_ai.server.time_to_first_audio": 120
     },
     "events": [],
@@ -323,7 +323,7 @@ the event stream:
 
 ```python
 from strands.experimental.bidi.agent import BidiAgent
-from strands.experimental.bidi.types import BidiResponseCompleteEvent, BidiUsageEvent
+from strands.experimental.bidi.types import BidiResponseStopEvent, BidiUsageEvent
 
 
 async def track_session(agent: BidiAgent) -> None:
@@ -338,7 +338,7 @@ async def track_session(agent: BidiAgent) -> None:
                     f"  {modality['modality']}: "
                     f"in={modality['input_tokens']} out={modality['output_tokens']}"
                 )
-        elif isinstance(event, BidiResponseCompleteEvent):
+        elif isinstance(event, BidiResponseStopEvent):
             print(f"response {event.response_id} ended: {event.stop_reason}")
             break
 ```
@@ -430,14 +430,13 @@ trace, it inherits that trace's sampling decision.
 
 ## Provider differences
 
-Providers report streaming lifecycle events differently, which shows up directly in the
-trace:
+Each provider emits one span per response. Usage details vary by provider:
 
 | Provider | Response spans | Notes |
 |----------|-----------------|-------|
-| Bedrock Nova Sonic | One per content block | A single spoken turn can produce several `bidi_response` spans. All but the last close as `barge_in`, and time to first audio re-baselines on each. Count spoken turns from barge-in events and finish reasons rather than by counting response spans. No cache tokens or modality breakdown reported. |
-| OpenAI Realtime | One per turn | Reports cache read tokens and a modality breakdown when available. |
-| Google Gemini Live | None | Emits no response lifecycle events, so a session produces no `bidi_response` spans. Barge-ins, token usage including cache reads, and the modality breakdown are still reported. |
+| Bedrock Nova Sonic | One per response | Includes the user transcript within the response span. No cache tokens or modality breakdown reported. |
+| OpenAI Realtime | One per response | Reports cache read tokens and a modality breakdown when available. |
+| Google Gemini Live | One per response | Reports cache read tokens and a modality breakdown when available. |
 
 ## Best practices
 

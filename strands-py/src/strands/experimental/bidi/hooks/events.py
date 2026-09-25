@@ -43,7 +43,7 @@ class BidiAgentStopEvent(_HookEvent):
 
 
 @dataclass
-class BidiResponseCompleteEvent(_HookEvent):
+class BidiResponseStopEvent(_HookEvent):
     """Event triggered when the model reports that a response has ended.
 
     A connection failure or shutdown without a model-reported completion does not
@@ -64,10 +64,9 @@ class BidiBargeInEvent(_HookEvent):
 
     This event is fired when the user barges in (e.g., by speaking during the
     assistant's response) or when an error stops output. This is
-    specific to bidirectional streaming and doesn't exist in standard agents.
+    specific to a response and does not pause the bidirectional session.
 
-    Hook providers can use this event to log barge-ins, implement custom
-    barge-in handling, or trigger cleanup logic.
+    Hook providers can use this event to log barge-ins, stop playback, or trigger cleanup.
 
     Attributes:
         reason: Why response output should stop ("user_speech" or "error").

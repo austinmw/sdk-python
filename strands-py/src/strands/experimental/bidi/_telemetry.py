@@ -109,7 +109,7 @@ def end_response_span(
     Args:
         tracer: Tracer instance.
         span: The response span to end.
-        stop_reason: Why the response ended (complete, barge_in, tool_use, error).
+        stop_reason: Why the response ended (end_turn, barge_in, tool_use, error).
         time_to_first_audio_ms: Milliseconds from response start to the first audio chunk, if any
             audio was emitted for this response.
         error: Exception if the response ended with an error.
