@@ -1,24 +1,46 @@
 """Content-related type definitions for bidirectional streaming."""
 
+from dataclasses import dataclass
 from typing import Literal, TypeAlias
 
 from typing_extensions import TypedDict
 
 from ....types.content import TextBlock, _TextBlockData
 from ....types.media import ImageBlock, _ImageBlockData
+from ....types.tools import ToolResultBlock, _ToolResultBlockData
 from .media import AudioDelta, _AudioDeltaData
 
-BidiContentBlock: TypeAlias = TextBlock | ImageBlock
-"""A complete text or image block."""
+BidiUserContentBlock: TypeAlias = TextBlock | ImageBlock
+"""A complete text or image block supplied by a user."""
+
+BidiContentBlock: TypeAlias = BidiUserContentBlock | ToolResultBlock
+"""A complete text, image, or tool result block."""
 
 BidiContentDelta: TypeAlias = AudioDelta
 """An audio delta for the live input stream."""
 
-BidiContentBlockData: TypeAlias = _TextBlockData | _ImageBlockData
-"""Dictionary form of one text or image block."""
+BidiUserContentBlockData: TypeAlias = _TextBlockData | _ImageBlockData
+"""Dictionary form of one user content block."""
+
+BidiContentBlockData: TypeAlias = BidiUserContentBlockData | _ToolResultBlockData
+"""Dictionary form of one text, image, or tool result block."""
 
 BidiContentDeltaData: TypeAlias = _AudioDeltaData
 """Dictionary form of an audio delta."""
+
+
+@dataclass
+class BidiMessage:
+    """An input message containing ordered content blocks.
+
+    Callers must supply at least one block when sending and must not mix tool
+    results with user text or images. Send streaming deltas individually.
+
+    Attributes:
+        content: Ordered list of complete content blocks.
+    """
+
+    content: list[BidiContentBlock]
 
 
 class BidiTranscriptMetadata(TypedDict):
